@@ -17,10 +17,8 @@ npm installs require bypassing the system proxy:
 npm install --prefer-offline --noproxy registry.npmjs.org <package>
 ```
 
-One-time Google Drive setup (run from project root):
-```bash
-npx tsx scripts/get-refresh-token.ts
-```
+Google Drive auth uses a service account with domain-wide delegation (no
+one-time browser setup needed — see below).
 
 ## Architecture
 
@@ -46,7 +44,7 @@ Browser → proxy.ts (auth gate) → app/ pages / api routes
    - `R\d{8,}FRCU\d*` → FRCU label format
 4. Falls back to `page_N.pdf` if no barcode matches
 
-**`lib/drive.ts`** — Google Drive via `googleapis`. Uses OAuth2 with a stored refresh token (`GOOGLE_REFRESH_TOKEN` env var) — no user sign-in required at runtime. Enforces a 30-file cap in the target folder by deleting oldest files after each upload.
+**`lib/drive.ts`** — Google Drive via `googleapis`. Authenticates with a **service account using domain-wide delegation** (`google.auth.JWT` with `subject`), impersonating `account@lexuma.com`, who has edit rights on the target folder. The service-account JSON is supplied base64-encoded in `GOOGLE_SERVICE_ACCOUNT_B64`. No browser sign-in or token refresh — works headless and never expires. Enforces a 30-file cap in the target folder by deleting oldest files after each upload.
 
 **`app/api/convert/route.ts`** — accepts `multipart/form-data` with field `file` (PDF), calls `splitAndNamePages`, zips with `jszip`, uploads to Drive, returns the ZIP as a direct download response. Vercel function: 60 s timeout, 1 GB memory.
 
@@ -56,8 +54,8 @@ Browser → proxy.ts (auth gate) → app/ pages / api routes
 |---|---|
 | `LOGIN_ID` / `LOGIN_PASSWORD` | App login credentials |
 | `SESSION_SECRET` | JWT signing key |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth2 client (shared with Yun Converter project) |
-| `GOOGLE_REFRESH_TOKEN` | Pre-authorised token for `shop@lexuma.com` Drive access |
+| `GOOGLE_SERVICE_ACCOUNT_B64` | Base64 of the service-account JSON (domain-wide delegation) |
+| `GOOGLE_IMPERSONATE_USER` | User to impersonate (`account@lexuma.com`) |
 | `GOOGLE_DRIVE_FOLDER_ID` | Target Drive folder (`1P2rNovyXAR6E-9bMKYwweT0eXAB9cNNa`) |
 
 ### Adding a new label format

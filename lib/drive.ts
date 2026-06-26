@@ -2,23 +2,35 @@ import { google } from 'googleapis'
 import { Readable } from 'stream'
 
 const FOLDER_ID = process.env.GOOGLE_DRIVE_FOLDER_ID!
+const IMPERSONATE_USER = process.env.GOOGLE_IMPERSONATE_USER || 'account@lexuma.com'
 const MAX_RECORDS = 30
 
-function getOAuth2Client() {
-  const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET
-  )
-  oauth2Client.setCredentials({
-    refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+/**
+ * Auth via a Google service account with domain-wide delegation, impersonating
+ * IMPERSONATE_USER (account@lexuma.com), who has edit rights on the target
+ * folder. The service-account JSON is provided base64-encoded in the
+ * GOOGLE_SERVICE_ACCOUNT_B64 env var (avoids newline-escaping issues with the
+ * private key). This replaces the previous OAuth refresh-token flow, which
+ * required a fragile one-time browser sign-in and could expire.
+ */
+function getDriveAuth() {
+  const b64 = process.env.GOOGLE_SERVICE_ACCOUNT_B64
+  if (!b64) throw new Error('GOOGLE_SERVICE_ACCOUNT_B64 is not set')
+  const json = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'))
+  return new google.auth.JWT({
+    email: json.client_email,
+    key: json.private_key,
+    scopes: ['https://www.googleapis.com/auth/drive'],
+    subject: IMPERSONATE_USER,
   })
-  return oauth2Client
+}
+
+function getDriveClient() {
+  return google.drive({ version: 'v3', auth: getDriveAuth() })
 }
 
 export async function uploadZipToDrive(zipBuffer: Buffer, filename: string): Promise<string> {
-  const auth = getOAuth2Client()
-  const drive = google.drive({ version: 'v3', auth })
-
+  const drive = getDriveClient()
   const stream = Readable.from(zipBuffer)
 
   const res = await drive.files.create({
@@ -39,8 +51,7 @@ export async function uploadZipToDrive(zipBuffer: Buffer, filename: string): Pro
 }
 
 export async function enforceRecordLimit(): Promise<void> {
-  const auth = getOAuth2Client()
-  const drive = google.drive({ version: 'v3', auth })
+  const drive = getDriveClient()
 
   const list = await drive.files.list({
     q: `'${FOLDER_ID}' in parents and trashed = false`,
