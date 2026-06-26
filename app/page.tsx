@@ -185,7 +185,7 @@ export default function HomePage() {
           gap: 0;
         }
         .header-brand-name {
-          font-size: 18px;
+          font-size: 20px;
           font-weight: 700;
           letter-spacing: 0.1em;
           color: #f1f5f9;
@@ -193,11 +193,11 @@ export default function HomePage() {
           line-height: 1;
         }
         .header-brand-sub {
-          font-size: 12px;
-          font-weight: 300;
+          font-size: 14px;
+          font-weight: 400;
           font-style: italic;
           letter-spacing: 0.12em;
-          color: #475569;
+          color: #7a8fa8;
           text-transform: uppercase;
         }
 
@@ -214,7 +214,7 @@ export default function HomePage() {
           gap: 2px;
         }
         .header-title {
-          font-size: 20px;
+          font-size: 23px;
           font-weight: 700;
           letter-spacing: 0.12em;
           color: #e2e8f0;
@@ -223,8 +223,8 @@ export default function HomePage() {
         }
         .header-title-sub {
           font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
-          color: #475569;
+          font-size: 13px;
+          color: #64748b;
           letter-spacing: 0.2em;
           text-transform: uppercase;
         }
@@ -233,7 +233,7 @@ export default function HomePage() {
 
         .logout-btn {
           font-family: 'Barlow Condensed', sans-serif;
-          font-size: 14px;
+          font-size: 16px;
           font-weight: 700;
           letter-spacing: 0.22em;
           text-transform: uppercase;
@@ -277,7 +277,7 @@ export default function HomePage() {
         .panel-heading-line { height: 1px; flex: 1; background: rgba(220,38,38,0.2); }
         .panel-heading-text {
           font-family: 'Share Tech Mono', monospace;
-          font-size: 13px;
+          font-size: 15px;
           letter-spacing: 0.28em;
           color: #dc2626;
           text-transform: uppercase;
@@ -317,7 +317,7 @@ export default function HomePage() {
         .drop-zone.dragging .zone-icon { color: #dc2626; transform: translateY(-4px); }
 
         .zone-main-text {
-          font-size: 22px;
+          font-size: 26px;
           font-weight: 700;
           letter-spacing: 0.08em;
           color: #94a3b8;
@@ -327,9 +327,9 @@ export default function HomePage() {
         .drop-zone.dragging .zone-main-text { color: #e2e8f0; }
 
         .zone-sub-text {
-          font-size: 16px;
+          font-size: 18px;
           font-weight: 400;
-          color: #3d5068;
+          color: #4d6278;
           letter-spacing: 0.06em;
           display: flex;
           align-items: center;
@@ -355,8 +355,8 @@ export default function HomePage() {
 
         .zone-hint {
           font-family: 'Share Tech Mono', monospace;
-          font-size: 12px;
-          color: #3d5068;
+          font-size: 13px;
+          color: #4d6278;
           letter-spacing: 0.1em;
         }
 
@@ -401,11 +401,11 @@ export default function HomePage() {
         /* ── Convert button ── */
         .convert-btn {
           width: 100%;
-          padding: 18px;
+          padding: 20px;
           background: #dc2626;
           color: #fff;
           font-family: 'Barlow Condensed', sans-serif;
-          font-size: 20px;
+          font-size: 22px;
           font-weight: 700;
           letter-spacing: 0.36em;
           text-transform: uppercase;
@@ -455,7 +455,7 @@ export default function HomePage() {
         .status-body { flex: 1; }
 
         .status-title {
-          font-size: 20px;
+          font-size: 22px;
           font-weight: 700;
           letter-spacing: 0.08em;
           text-transform: uppercase;
@@ -468,8 +468,8 @@ export default function HomePage() {
 
         .status-sub {
           font-family: 'Share Tech Mono', monospace;
-          font-size: 13px;
-          color: #475569;
+          font-size: 14px;
+          color: #64748b;
           margin-bottom: 16px;
           line-height: 1.5;
         }
@@ -485,11 +485,11 @@ export default function HomePage() {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          padding: 11px 22px;
+          padding: 12px 24px;
           background: #22c55e;
           color: #052e16;
           font-family: 'Barlow Condensed', sans-serif;
-          font-size: 16px;
+          font-size: 18px;
           font-weight: 700;
           letter-spacing: 0.2em;
           text-transform: uppercase;
@@ -506,11 +506,11 @@ export default function HomePage() {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          padding: 11px 18px;
+          padding: 12px 20px;
           background: transparent;
-          color: #64748b;
+          color: #7a8fa8;
           font-family: 'Barlow Condensed', sans-serif;
-          font-size: 15px;
+          font-size: 17px;
           font-weight: 600;
           letter-spacing: 0.18em;
           text-transform: uppercase;
@@ -522,8 +522,8 @@ export default function HomePage() {
 
         .drive-note {
           font-family: 'Share Tech Mono', monospace;
-          font-size: 12px;
-          color: #334155;
+          font-size: 13px;
+          color: #4d6278;
           letter-spacing: 0.1em;
           display: flex;
           align-items: center;

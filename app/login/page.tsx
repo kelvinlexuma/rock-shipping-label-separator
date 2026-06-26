@@ -76,7 +76,7 @@ export default function LoginPage() {
         .eyebrow-line { height: 1px; flex: 1; background: rgba(220,38,38,0.2); }
         .eyebrow-text {
           font-family: 'Share Tech Mono', monospace;
-          font-size: 12px;
+          font-size: 13px;
           color: #dc2626;
           letter-spacing: 0.28em;
           text-transform: uppercase;
@@ -140,22 +140,22 @@ export default function LoginPage() {
         }
 
         .company-deco {
-          font-size: 15px;
-          font-weight: 300;
-          letter-spacing: 0.28em;
-          color: #475569;
+          font-size: 18px;
+          font-weight: 400;
+          letter-spacing: 0.22em;
+          color: #7a8fa8;
           text-transform: uppercase;
           text-align: center;
         }
         .company-deco em {
           font-style: normal;
-          color: #64748b;
-          font-weight: 600;
+          color: #b0bfd0;
+          font-weight: 700;
         }
 
         .app-name-block { text-align: center; margin-top: 4px; }
         .app-name {
-          font-size: 30px;
+          font-size: 34px;
           font-weight: 700;
           letter-spacing: 0.1em;
           color: #f1f5f9;
@@ -164,11 +164,11 @@ export default function LoginPage() {
         }
         .app-tag {
           font-family: 'Share Tech Mono', monospace;
-          font-size: 12px;
+          font-size: 13px;
           color: #dc2626;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          margin-top: 6px;
+          margin-top: 8px;
         }
 
         .card-divider {
@@ -183,9 +183,9 @@ export default function LoginPage() {
 
         .field-label {
           font-family: 'Share Tech Mono', monospace;
-          font-size: 12px;
+          font-size: 13px;
           letter-spacing: 0.22em;
-          color: #64748b;
+          color: #7a8fa8;
           text-transform: uppercase;
           display: block;
           margin-bottom: 10px;
@@ -199,7 +199,7 @@ export default function LoginPage() {
           padding: 14px 16px;
           color: #f1f5f9;
           font-family: 'Share Tech Mono', monospace;
-          font-size: 15px;
+          font-size: 16px;
           letter-spacing: 0.04em;
           outline: none;
           transition: all 0.2s;
@@ -224,11 +224,11 @@ export default function LoginPage() {
 
         .submit-btn {
           width: 100%;
-          padding: 17px;
+          padding: 18px;
           background: #dc2626;
           color: #fff;
           font-family: 'Barlow Condensed', sans-serif;
-          font-size: 19px;
+          font-size: 22px;
           font-weight: 700;
           letter-spacing: 0.38em;
           text-transform: uppercase;
@@ -268,11 +268,11 @@ export default function LoginPage() {
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .card-footer {
-          padding: 14px 40px 20px;
+          padding: 14px 40px 22px;
           text-align: center;
           font-family: 'Share Tech Mono', monospace;
-          font-size: 11px;
-          color: #2a3a4e;
+          font-size: 12px;
+          color: #3d5068;
           letter-spacing: 0.2em;
           border-top: 1px solid rgba(255,255,255,0.03);
         }
