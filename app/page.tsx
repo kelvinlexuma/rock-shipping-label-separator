@@ -490,7 +490,7 @@ export default function HomePage() {
         <header className="app-header">
           <div className="header-logo">
             <img
-              src="/rock-logo.png"
+              src="/rock-logo.jpg"
               alt="Rock Enterprise"
               onError={e => {
                 const t = e.currentTarget
