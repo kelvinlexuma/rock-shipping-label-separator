@@ -8,6 +8,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [logoFailed, setLogoFailed] = useState(false)
   const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
 
@@ -15,7 +16,6 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     try {
       const res = await fetch('/api/login', {
         method: 'POST',
@@ -37,7 +37,8 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:ital,wght@0,300;0,400;0,600;0,700;1,300&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         .login-root {
           font-family: 'Barlow Condensed', sans-serif;
@@ -45,214 +46,220 @@ export default function LoginPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #0a0f1a;
+          background: #080d18;
           background-image:
-            repeating-linear-gradient(
-              0deg,
-              transparent,
-              transparent 39px,
-              rgba(220,38,38,0.04) 39px,
-              rgba(220,38,38,0.04) 40px
-            ),
-            repeating-linear-gradient(
-              90deg,
-              transparent,
-              transparent 39px,
-              rgba(220,38,38,0.04) 39px,
-              rgba(220,38,38,0.04) 40px
-            );
-          padding: 24px;
-        }
-
-        .login-root::before {
-          content: '';
-          position: fixed;
-          inset: 0;
-          background: repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 2px,
-            rgba(0,0,0,0.15) 2px,
-            rgba(0,0,0,0.15) 4px
-          );
-          pointer-events: none;
-          z-index: 0;
+            radial-gradient(ellipse 90% 50% at 50% -5%, rgba(220,38,38,0.14) 0%, transparent 65%),
+            repeating-linear-gradient(0deg,   transparent, transparent 59px, rgba(220,38,38,0.04) 59px, rgba(220,38,38,0.04) 60px),
+            repeating-linear-gradient(90deg,  transparent, transparent 59px, rgba(220,38,38,0.04) 59px, rgba(220,38,38,0.04) 60px);
+          padding: 32px 20px;
         }
 
         .login-card {
-          position: relative;
-          z-index: 1;
           width: 100%;
-          max-width: 400px;
-          background: #0f1624;
-          border: 1px solid rgba(220,38,38,0.25);
-          border-top: 2px solid #dc2626;
+          max-width: 460px;
+          background: #0c1220;
+          border: 1px solid rgba(220,38,38,0.18);
+          border-top: 3px solid #dc2626;
           box-shadow:
-            0 0 40px rgba(220,38,38,0.08),
-            0 20px 60px rgba(0,0,0,0.6),
-            inset 0 1px 0 rgba(255,255,255,0.04);
+            0 0 0 1px rgba(255,255,255,0.02) inset,
+            0 0 80px rgba(220,38,38,0.07),
+            0 32px 80px rgba(0,0,0,0.75);
         }
 
-        .card-header {
-          padding: 32px 32px 0;
-          text-align: center;
-        }
-
-        .card-header .corner-tag {
-          font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
-          color: #dc2626;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
+        .card-eyebrow {
           display: flex;
           align-items: center;
-          gap: 8px;
-          margin-bottom: 24px;
+          padding: 16px 32px;
+          border-bottom: 1px solid rgba(255,255,255,0.04);
+          gap: 14px;
         }
-        .corner-tag::before,
-        .corner-tag::after {
-          content: '';
-          flex: 1;
-          height: 1px;
-          background: rgba(220,38,38,0.3);
-        }
-
-        .logo-wrap {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 20px;
-        }
-
-        .logo-wrap img {
-          height: 52px;
-          object-fit: contain;
-          filter: brightness(0) invert(1);
-        }
-
-        .logo-fallback {
-          font-family: 'Barlow Condensed', sans-serif;
-          font-size: 28px;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          color: #fff;
+        .eyebrow-line { height: 1px; flex: 1; background: rgba(220,38,38,0.2); }
+        .eyebrow-text {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 12px;
+          color: #dc2626;
+          letter-spacing: 0.28em;
           text-transform: uppercase;
+          white-space: nowrap;
         }
 
-        .card-title {
-          font-size: 13px;
+        .card-logo-section {
+          padding: 40px 40px 28px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 14px;
+        }
+
+        .logo-img {
+          height: 56px;
+          width: auto;
+          object-fit: contain;
+          filter: invert(1) hue-rotate(180deg);
+          display: block;
+        }
+
+        .logo-fallback-block {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+        }
+        .re-badge {
+          background: #dc2626;
+          width: 54px;
+          height: 54px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 24px;
+          color: #fff;
+          letter-spacing: 0.04em;
+          flex-shrink: 0;
+        }
+        .fallback-text {
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .fallback-name {
+          font-size: 26px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          color: #f1f5f9;
+          text-transform: uppercase;
+          line-height: 1;
+        }
+        .fallback-sub {
+          font-size: 14px;
           font-weight: 300;
-          letter-spacing: 0.3em;
+          font-style: italic;
+          letter-spacing: 0.14em;
           color: #64748b;
           text-transform: uppercase;
-          margin-bottom: 4px;
         }
 
-        .card-subtitle {
-          font-size: 20px;
-          font-weight: 600;
-          letter-spacing: 0.08em;
-          color: #e2e8f0;
+        .company-deco {
+          font-size: 15px;
+          font-weight: 300;
+          letter-spacing: 0.28em;
+          color: #475569;
           text-transform: uppercase;
-          margin-bottom: 0;
+          text-align: center;
+        }
+        .company-deco em {
+          font-style: normal;
+          color: #64748b;
+          font-weight: 600;
         }
 
-        .divider {
-          margin: 28px 32px 0;
+        .app-name-block { text-align: center; margin-top: 4px; }
+        .app-name {
+          font-size: 30px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          color: #f1f5f9;
+          text-transform: uppercase;
+          line-height: 1.1;
+        }
+        .app-tag {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 12px;
+          color: #dc2626;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          margin-top: 6px;
+        }
+
+        .card-divider {
+          margin: 8px 40px 0;
           height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(220,38,38,0.3), transparent);
+          background: linear-gradient(90deg, transparent 0%, rgba(220,38,38,0.3) 50%, transparent 100%);
         }
 
-        .card-body {
-          padding: 28px 32px 32px;
-        }
+        .card-body { padding: 30px 40px 40px; }
 
-        .field-group {
-          margin-bottom: 18px;
-        }
+        .field-group { margin-bottom: 22px; }
 
         .field-label {
           font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
-          letter-spacing: 0.2em;
+          font-size: 12px;
+          letter-spacing: 0.22em;
           color: #64748b;
           text-transform: uppercase;
           display: block;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
         }
 
         .field-input {
           width: 100%;
           background: rgba(255,255,255,0.03);
-          border: 1px solid rgba(148,163,184,0.12);
-          border-bottom: 1px solid rgba(220,38,38,0.3);
-          padding: 11px 14px;
-          color: #e2e8f0;
+          border: 1px solid rgba(148,163,184,0.08);
+          border-bottom: 2px solid rgba(220,38,38,0.3);
+          padding: 14px 16px;
+          color: #f1f5f9;
           font-family: 'Share Tech Mono', monospace;
-          font-size: 14px;
-          letter-spacing: 0.05em;
+          font-size: 15px;
+          letter-spacing: 0.04em;
           outline: none;
           transition: all 0.2s;
-          box-sizing: border-box;
         }
-
         .field-input:focus {
-          border-color: rgba(220,38,38,0.6);
+          border-bottom-color: #dc2626;
           background: rgba(220,38,38,0.03);
-          box-shadow: 0 0 0 1px rgba(220,38,38,0.15) inset;
+          box-shadow: 0 4px 16px rgba(220,38,38,0.08);
         }
-
-        .field-input::placeholder {
-          color: #334155;
-        }
+        .field-input::placeholder { color: #253040; }
 
         .error-bar {
-          background: rgba(220,38,38,0.08);
-          border-left: 2px solid #dc2626;
-          padding: 10px 14px;
-          margin-bottom: 18px;
+          background: rgba(220,38,38,0.1);
+          border-left: 3px solid #dc2626;
+          padding: 13px 16px;
+          margin-bottom: 22px;
           font-family: 'Share Tech Mono', monospace;
-          font-size: 12px;
+          font-size: 13px;
           color: #fca5a5;
-          letter-spacing: 0.05em;
+          letter-spacing: 0.04em;
         }
 
         .submit-btn {
           width: 100%;
-          padding: 14px;
+          padding: 17px;
           background: #dc2626;
           color: #fff;
           font-family: 'Barlow Condensed', sans-serif;
-          font-size: 15px;
+          font-size: 19px;
           font-weight: 700;
-          letter-spacing: 0.3em;
+          letter-spacing: 0.38em;
           text-transform: uppercase;
           border: none;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: background 0.2s, box-shadow 0.2s, letter-spacing 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
-          margin-top: 24px;
+          gap: 10px;
+          margin-top: 30px;
+          position: relative;
+          overflow: hidden;
         }
-
+        .submit-btn::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+          pointer-events: none;
+        }
         .submit-btn:hover:not(:disabled) {
           background: #b91c1c;
-          box-shadow: 0 0 20px rgba(220,38,38,0.4);
+          box-shadow: 0 0 36px rgba(220,38,38,0.55), 0 6px 20px rgba(0,0,0,0.4);
+          letter-spacing: 0.44em;
         }
-
-        .submit-btn:active:not(:disabled) {
-          transform: translateY(1px);
-        }
-
-        .submit-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
+        .submit-btn:active:not(:disabled) { transform: translateY(1px); }
+        .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
         .spinner {
-          width: 14px;
-          height: 14px;
+          width: 16px; height: 16px;
           border: 2px solid rgba(255,255,255,0.3);
           border-top-color: #fff;
           border-radius: 50%;
@@ -261,41 +268,56 @@ export default function LoginPage() {
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .card-footer {
-          padding: 12px 32px 20px;
+          padding: 14px 40px 20px;
           text-align: center;
           font-family: 'Share Tech Mono', monospace;
-          font-size: 10px;
-          color: #1e293b;
-          letter-spacing: 0.15em;
+          font-size: 11px;
+          color: #2a3a4e;
+          letter-spacing: 0.2em;
+          border-top: 1px solid rgba(255,255,255,0.03);
         }
       `}</style>
 
       <div className="login-root">
         <div className="login-card">
-          <div className="card-header">
-            <div className="corner-tag">SECURE ACCESS</div>
-            <div className="logo-wrap">
-              <img
-                src="/rock-logo.jpg"
-                alt="Rock Enterprise"
-                onError={e => {
-                  const t = e.currentTarget
-                  t.style.display = 'none'
-                  const fb = t.nextElementSibling as HTMLElement
-                  if (fb) fb.style.display = 'block'
-                }}
-              />
-              <span className="logo-fallback" style={{ display: 'none' }}>ROCK</span>
-            </div>
-            <div className="card-title">Rock Enterprise</div>
-            <div className="card-subtitle">Shipping Label Separator</div>
+          <div className="card-eyebrow">
+            <span className="eyebrow-line" />
+            <span className="eyebrow-text">Secure Access</span>
+            <span className="eyebrow-line" />
           </div>
 
-          <div className="divider" />
+          <div className="card-logo-section">
+            {!logoFailed ? (
+              <img
+                className="logo-img"
+                src="/rock-logo.png"
+                alt="Rock Enterprise"
+                onError={() => setLogoFailed(true)}
+              />
+            ) : (
+              <div className="logo-fallback-block">
+                <div className="re-badge">RE</div>
+                <div className="fallback-text">
+                  <div className="fallback-name">Rock Enterprise</div>
+                  <div className="fallback-sub">Co. Ltd.</div>
+                </div>
+              </div>
+            )}
+
+            <div className="company-deco">
+              <em>Rock Enterprise</em> Co. Ltd.
+            </div>
+
+            <div className="app-name-block">
+              <div className="app-name">Shipping Label Separator</div>
+              <div className="app-tag">Internal Operations Tool</div>
+            </div>
+          </div>
+
+          <div className="card-divider" />
 
           <div className="card-body">
             {error && <div className="error-bar">{error}</div>}
-
             <form ref={formRef} onSubmit={handleSubmit}>
               <div className="field-group">
                 <label className="field-label" htmlFor="username">User ID</label>
@@ -310,7 +332,6 @@ export default function LoginPage() {
                   required
                 />
               </div>
-
               <div className="field-group">
                 <label className="field-label" htmlFor="password">Password</label>
                 <input
@@ -324,21 +345,13 @@ export default function LoginPage() {
                   required
                 />
               </div>
-
               <button className="submit-btn" type="submit" disabled={loading}>
-                {loading ? (
-                  <>
-                    <span className="spinner" />
-                    Authenticating
-                  </>
-                ) : (
-                  'Sign In'
-                )}
+                {loading ? <><span className="spinner" />Authenticating…</> : 'Sign In'}
               </button>
             </form>
           </div>
 
-          <div className="card-footer">INTERNAL USE ONLY · ROCK ENTERPRISE</div>
+          <div className="card-footer">Internal Use Only · Rock Enterprise Co. Ltd.</div>
         </div>
       </div>
     </>
