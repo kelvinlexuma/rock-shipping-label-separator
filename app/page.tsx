@@ -137,7 +137,7 @@ export default function HomePage() {
           align-items: center;
           justify-content: space-between;
           padding: 0 32px;
-          height: 68px;
+          min-height: 68px;
           background: #0c1220;
           border-bottom: 1px solid rgba(220,38,38,0.18);
           border-top: 3px solid #dc2626;
@@ -145,13 +145,20 @@ export default function HomePage() {
           top: 0;
           z-index: 10;
           box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-          gap: 20px;
+          gap: 16px;
+        }
+
+        .header-left {
+          display: flex;
+          align-items: center;
+          gap: 18px;
+          min-width: 0;
+          flex: 1;
         }
 
         .header-brand {
           display: flex;
           align-items: center;
-          gap: 14px;
           flex-shrink: 0;
         }
         .header-logo-img {
@@ -168,8 +175,8 @@ export default function HomePage() {
         }
         .header-re-badge {
           background: #dc2626;
-          width: 36px;
-          height: 36px;
+          width: 38px;
+          height: 38px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -179,31 +186,10 @@ export default function HomePage() {
           letter-spacing: 0.04em;
           flex-shrink: 0;
         }
-        .header-brand-text {
-          display: flex;
-          flex-direction: column;
-          gap: 0;
-        }
-        .header-brand-name {
-          font-size: 20px;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          color: #f1f5f9;
-          text-transform: uppercase;
-          line-height: 1;
-        }
-        .header-brand-sub {
-          font-size: 14px;
-          font-weight: 400;
-          font-style: italic;
-          letter-spacing: 0.12em;
-          color: #7a8fa8;
-          text-transform: uppercase;
-        }
 
         .header-divider {
           width: 1px;
-          height: 28px;
+          height: 30px;
           background: rgba(220,38,38,0.2);
           flex-shrink: 0;
         }
@@ -212,6 +198,7 @@ export default function HomePage() {
           display: flex;
           flex-direction: column;
           gap: 2px;
+          min-width: 0;
         }
         .header-title {
           font-size: 23px;
@@ -220,6 +207,9 @@ export default function HomePage() {
           color: #e2e8f0;
           text-transform: uppercase;
           line-height: 1;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .header-title-sub {
           font-family: 'Share Tech Mono', monospace;
@@ -227,11 +217,11 @@ export default function HomePage() {
           color: #64748b;
           letter-spacing: 0.2em;
           text-transform: uppercase;
+          white-space: nowrap;
         }
 
-        .header-right { flex: 1; display: flex; justify-content: flex-end; }
-
         .logout-btn {
+          flex-shrink: 0;
           font-family: 'Barlow Condensed', sans-serif;
           font-size: 16px;
           font-weight: 700;
@@ -572,41 +562,63 @@ export default function HomePage() {
           from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+
+        /* ── Mobile ── */
+        @media (max-width: 640px) {
+          .app-header {
+            padding: 12px 16px;
+            gap: 12px;
+          }
+          .header-left { gap: 12px; }
+          .header-logo-img { height: 30px; }
+          /* App title is redundant with the panel heading on small screens */
+          .header-divider,
+          .header-title-block { display: none; }
+          .logout-btn {
+            font-size: 14px;
+            padding: 8px 14px;
+            letter-spacing: 0.14em;
+          }
+          .app-main { padding: 32px 16px; }
+          .panel-heading-text { font-size: 13px; letter-spacing: 0.2em; }
+          .drop-zone { min-height: 200px; padding: 36px 20px; }
+          .zone-icon { width: 52px; height: 52px; }
+          .zone-main-text { font-size: 21px; }
+          .zone-sub-text { font-size: 16px; }
+          .convert-btn { font-size: 19px; letter-spacing: 0.28em; }
+          .toast { left: 16px; right: 16px; bottom: 16px; max-width: none; }
+        }
       `}</style>
 
       {toast && <div className="toast">{toast}</div>}
 
       <div className="app-root">
         <header className="app-header">
-          <div className="header-brand">
-            {!logoFailed ? (
-              <img
-                className="header-logo-img"
-                src="/rock-logo.png"
-                alt="Rock Enterprise"
-                onError={() => setLogoFailed(true)}
-              />
-            ) : (
-              <div className="header-logo-fallback">
-                <div className="header-re-badge">RE</div>
-              </div>
-            )}
-            <div className="header-brand-text">
-              <div className="header-brand-name">Rock Enterprise</div>
-              <div className="header-brand-sub">Co. Ltd.</div>
+          <div className="header-left">
+            <div className="header-brand">
+              {!logoFailed ? (
+                <img
+                  className="header-logo-img"
+                  src="/rock-logo.png"
+                  alt="Rock Enterprise"
+                  onError={() => setLogoFailed(true)}
+                />
+              ) : (
+                <div className="header-logo-fallback">
+                  <div className="header-re-badge">RE</div>
+                </div>
+              )}
+            </div>
+
+            <div className="header-divider" />
+
+            <div className="header-title-block">
+              <div className="header-title">Shipping Label Separator</div>
+              <div className="header-title-sub">Internal Operations Tool</div>
             </div>
           </div>
 
-          <div className="header-divider" />
-
-          <div className="header-title-block">
-            <div className="header-title">Shipping Label Separator</div>
-            <div className="header-title-sub">Internal Operations Tool</div>
-          </div>
-
-          <div className="header-right">
-            <button className="logout-btn" onClick={handleLogout}>Logout</button>
-          </div>
+          <button className="logout-btn" onClick={handleLogout}>Logout</button>
         </header>
 
         <main className="app-main">

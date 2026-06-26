@@ -139,21 +139,7 @@ export default function LoginPage() {
           text-transform: uppercase;
         }
 
-        .company-deco {
-          font-size: 18px;
-          font-weight: 400;
-          letter-spacing: 0.22em;
-          color: #7a8fa8;
-          text-transform: uppercase;
-          text-align: center;
-        }
-        .company-deco em {
-          font-style: normal;
-          color: #b0bfd0;
-          font-weight: 700;
-        }
-
-        .app-name-block { text-align: center; margin-top: 4px; }
+        .app-name-block { text-align: center; margin-top: 8px; }
         .app-name {
           font-size: 34px;
           font-weight: 700;
@@ -303,10 +289,6 @@ export default function LoginPage() {
                 </div>
               </div>
             )}
-
-            <div className="company-deco">
-              <em>Rock Enterprise</em> Co. Ltd.
-            </div>
 
             <div className="app-name-block">
               <div className="app-name">Shipping Label Separator</div>

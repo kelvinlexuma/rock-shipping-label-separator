@@ -19,34 +19,21 @@ function findBarcode(text: string): string | null {
 }
 
 /**
- * Extract per-page text from the original full PDF using pdfjs-dist.
- * Tested and confirmed working on both EAE (BB...) and FRCU (R...FRCU...) formats.
- * pdf-parse was replaced because its pagerender callback had import/API issues
- * and single-page copies made by pdf-lib lost font data needed for text extraction.
+ * Extract per-page text from the original full PDF using unpdf.
+ *
+ * unpdf ships a self-contained serverless build of pdf.js with NO external
+ * worker/font/cmap files, so it bundles cleanly into a Vercel Lambda. The
+ * previous `pdfjs-dist/legacy/build/pdf.mjs` import worked in local dev but
+ * failed at runtime on Vercel (file tracing missed pdf.js's dependencies),
+ * silently falling back to page_N.pdf names. Tested on both EAE (BB...) and
+ * FRCU (R...FRCU...) sample PDFs.
  */
 async function extractPageTexts(fullPdfBytes: Uint8Array): Promise<string[]> {
-  // Dynamic import keeps pdfjs-dist server-side only (serverExternalPackages)
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
-
-  const loadingTask = pdfjsLib.getDocument({
-    data: fullPdfBytes,
-    // Suppress font warning — doesn't affect text extraction
-    verbosity: 0,
-  })
-  const pdfDoc = await loadingTask.promise
-  const texts: string[] = []
-
-  for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-    const page = await pdfDoc.getPage(pageNum)
-    const content = await page.getTextContent()
-    const text = content.items
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((item: any) => item.str ?? '')
-      .join(' ')
-    texts.push(text)
-  }
-
-  return texts
+  const { extractText, getDocumentProxy } = await import('unpdf')
+  // getDocumentProxy consumes the buffer; pass a copy so pdf-lib can reuse the original
+  const pdf = await getDocumentProxy(new Uint8Array(fullPdfBytes))
+  const { text } = await extractText(pdf, { mergePages: false })
+  return text
 }
 
 export async function splitAndNamePages(pdfBytes: Uint8Array): Promise<LabelPage[]> {
@@ -58,7 +45,7 @@ export async function splitAndNamePages(pdfBytes: Uint8Array): Promise<LabelPage
   try {
     pageTexts = await extractPageTexts(pdfBytes)
   } catch (err) {
-    console.error('pdfjs text extraction failed:', err)
+    console.error('unpdf text extraction failed:', err)
   }
 
   const results: LabelPage[] = []
@@ -73,7 +60,7 @@ export async function splitAndNamePages(pdfBytes: Uint8Array): Promise<LabelPage
     const barcode = pageTexts[i] ? findBarcode(pageTexts[i]) : null
 
     const filename = barcode ? `${barcode}.pdf` : `page_${i + 1}.pdf`
-    console.log(`Page ${i + 1}: "${pageTexts[i]?.slice(0, 60)}" → ${filename}`)
+    console.log(`Page ${i + 1}: barcode=${barcode ?? 'none'} → ${filename}`)
     results.push({ filename, bytes: pageBytes })
   }
 

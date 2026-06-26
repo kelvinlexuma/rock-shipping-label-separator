@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,7 +15,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Shipping Label Separator — Rock Enterprise",
   description: "Internal tool for splitting multi-page shipping label PDFs",
-  icons: { icon: '/rock-favicon.png' },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#080d18",
 };
 
 export default function RootLayout({
