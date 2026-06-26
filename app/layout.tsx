@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Shipping Label Separator — Rock Enterprise",
   description: "Internal tool for splitting multi-page shipping label PDFs",
+  icons: { icon: '/rock-favicon.png' },
 };
 
 export default function RootLayout({

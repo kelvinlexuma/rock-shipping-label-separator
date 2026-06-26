@@ -19,43 +19,46 @@ function findBarcode(text: string): string | null {
 }
 
 /**
- * Extract per-page text from the original full PDF.
- * Parsing the original preserves font/encoding tables that get lost
- * when pdf-lib re-saves single-page copies.
+ * Extract per-page text from the original full PDF using pdfjs-dist.
+ * Tested and confirmed working on both EAE (BB...) and FRCU (R...FRCU...) formats.
+ * pdf-parse was replaced because its pagerender callback had import/API issues
+ * and single-page copies made by pdf-lib lost font data needed for text extraction.
  */
 async function extractPageTexts(fullPdfBytes: Uint8Array): Promise<string[]> {
-  const pdfModule = await import('pdf-parse')
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const pdfParse: (buf: Buffer, opts?: any) => Promise<{ text: string }> =
-    (pdfModule as any).default ?? pdfModule
+  // Dynamic import keeps pdfjs-dist server-side only (serverExternalPackages)
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
 
-  const pageTexts: string[] = []
-
-  await pdfParse(Buffer.from(fullPdfBytes), {
-    // pagerender is called once per page before the final text is assembled
-    pagerender: (pageData: any) =>
-      pageData.getTextContent().then((content: any) => {
-        const text: string = content.items
-          .map((item: any) => item.str ?? '')
-          .join('\n')
-        pageTexts.push(text)
-        return text
-      }),
+  const loadingTask = pdfjsLib.getDocument({
+    data: fullPdfBytes,
+    // Suppress font warning — doesn't affect text extraction
+    verbosity: 0,
   })
+  const pdfDoc = await loadingTask.promise
+  const texts: string[] = []
 
-  return pageTexts
+  for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+    const page = await pdfDoc.getPage(pageNum)
+    const content = await page.getTextContent()
+    const text = content.items
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .map((item: any) => item.str ?? '')
+      .join(' ')
+    texts.push(text)
+  }
+
+  return texts
 }
 
 export async function splitAndNamePages(pdfBytes: Uint8Array): Promise<LabelPage[]> {
   const srcDoc = await PDFDocument.load(pdfBytes)
   const pageCount = srcDoc.getPageCount()
 
-  // Extract per-page text from the original PDF first
+  // Extract all page texts from the original PDF first (font data intact)
   let pageTexts: string[] = []
   try {
     pageTexts = await extractPageTexts(pdfBytes)
   } catch (err) {
-    console.error('Batch text extraction failed, will try per-page fallback:', err)
+    console.error('pdfjs text extraction failed:', err)
   }
 
   const results: LabelPage[] = []
@@ -67,25 +70,10 @@ export async function splitAndNamePages(pdfBytes: Uint8Array): Promise<LabelPage
     pageDoc.addPage(copiedPage)
     const pageBytes = await pageDoc.save()
 
-    // Try barcode from pre-extracted text first
-    let barcode = pageTexts[i] ? findBarcode(pageTexts[i]) : null
-
-    // Fallback: parse the single-page copy directly
-    if (!barcode) {
-      try {
-        const pdfModule = await import('pdf-parse')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const pdfParse: (buf: Buffer) => Promise<{ text: string }> =
-          (pdfModule as any).default ?? pdfModule
-        const { text } = await pdfParse(Buffer.from(pageBytes))
-        barcode = findBarcode(text)
-      } catch (err) {
-        console.error(`Fallback extraction failed for page ${i + 1}:`, err)
-      }
-    }
+    const barcode = pageTexts[i] ? findBarcode(pageTexts[i]) : null
 
     const filename = barcode ? `${barcode}.pdf` : `page_${i + 1}.pdf`
-    console.log(`Page ${i + 1}: barcode="${barcode ?? 'none'}" → ${filename}`)
+    console.log(`Page ${i + 1}: "${pageTexts[i]?.slice(0, 60)}" → ${filename}`)
     results.push({ filename, bytes: pageBytes })
   }
 
