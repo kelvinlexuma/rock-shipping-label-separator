@@ -14,9 +14,15 @@
 
 html,
 body {
+  margin: 0;
+  padding: 0;
   background: #080d18;
   color: var(--foreground);
-  /* Prevent white gutters / horizontal overscroll on mobile */
-  overflow-x: hidden;
-  overscroll-behavior: none;
+}
+
+/* Prevent horizontal scroll on mobile WITHOUT creating a vertical scroll
+   container. `overflow-x: clip` (unlike `hidden`) does not force overflow-y to
+   `auto`, so the page keeps its single, natural document scroll. */
+body {
+  overflow-x: clip;
 }
