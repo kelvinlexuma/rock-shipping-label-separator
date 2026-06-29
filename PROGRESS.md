@@ -38,6 +38,41 @@ still correct and fast (~3–6 s), Drive upload intact.
 
 Commits: `5d325a3`, `7852855`.
 
+### Output filename preview
+
+After conversion the success view now lists every output PDF name so the user
+sees exactly what they'll get before downloading. The convert route returns the
+final (deduplicated) names in an `X-Filenames` header (base64 JSON); the UI
+renders them in a numbered two-column panel (one column on mobile), barcode stem
+highlighted and `.pdf` dimmed, with an amber "no barcode" tag on any `page_N`
+fallback. Verified desktop + mobile via Puppeteer; `X-Filenames` confirmed on
+live production. Commit `cd0b6ba`.
+
+### Page-scroll bug (the filename preview wouldn't let the page scroll)
+
+**Symptom:** once the output list was shown, the main page wouldn't scroll
+(desktop + mobile).
+
+**First (wrong) fix:** removed the list's own inner scrollbar
+(`overflow-y:auto` + `max-height`). Real but secondary — problem persisted.
+Commit `dd4e8bc`.
+
+**Actual root cause:** `<html>` had Tailwind's `h-full` (`height:100%`), locking
+it to the viewport height while content overflowed; the earlier
+`overflow-x:hidden` on it forced `overflow-y` to `auto`, making `<html>` a
+fixed-height scroll box that scrolls unreliably in real browsers (headless
+Chrome happened to scroll it, which masked the bug in earlier checks).
+
+**Fix:** drop `h-full` from `<html>` and `min-h-full flex flex-col` from `<body>`
+(`.app-root` already owns full height via `min-height:100vh`); use
+`overflow-x:clip` on `<body>` only — unlike `hidden`, `clip` blocks horizontal
+scroll without creating a vertical scroll container. Now one natural document
+scroll. **Lesson:** headless Chrome scrolls fragile `height:100%`-on-`<html>`
+setups that real browsers won't — verify scroll with the actual computed
+scroll-container, not just `scrollTop` movement. Verified on live production:
+html is no longer a scroll box; wheel (incl. over the file panel), keyboard, and
+mobile touch-swipe all scroll. Commit `4426b1e`.
+
 ---
 
 ## 2026-06-26 — Bug-fix & hardening session
