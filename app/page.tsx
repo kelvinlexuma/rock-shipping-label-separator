@@ -626,21 +626,17 @@ export default function HomePage() {
           white-space: nowrap;
         }
 
+        /* No inner scroll — the list flows in the normal page scroll so there's
+           only ever one scrollbar (a nested scroll area traps wheel/touch on
+           both desktop and mobile). */
         .files-list {
           list-style: none;
           margin: 0;
           padding: 8px;
-          max-height: 280px;
-          overflow-y: auto;
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 2px;
         }
-        /* custom scrollbar */
-        .files-list::-webkit-scrollbar { width: 8px; }
-        .files-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
-        .files-list::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.3); border-radius: 4px; }
-        .files-list::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.5); }
 
         .file-row {
           display: flex;
