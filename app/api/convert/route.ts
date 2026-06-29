@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
   const zip = new JSZip()
   // Deduplicate filenames in case two pages share a barcode
   const seen = new Map<string, number>()
+  const finalNames: string[] = []
   for (const { filename, bytes } of pages) {
     let name = filename
     if (seen.has(filename)) {
@@ -51,6 +52,7 @@ export async function POST(req: NextRequest) {
     } else {
       seen.set(filename, 1)
     }
+    finalNames.push(name)
     zip.file(name, bytes)
   }
 
@@ -67,6 +69,10 @@ export async function POST(req: NextRequest) {
     // Continue — still return ZIP to user even if Drive fails
   }
 
+  // Base64-encode the filename list so it survives as a header value regardless
+  // of count/characters. Frontend decodes it to render the output preview.
+  const filenamesB64 = Buffer.from(JSON.stringify(finalNames), 'utf8').toString('base64')
+
   return new NextResponse(zipBuffer as unknown as BodyInit, {
     status: 200,
     headers: {
@@ -75,6 +81,7 @@ export async function POST(req: NextRequest) {
       'X-Page-Count': String(pages.length),
       'X-Drive-Url': driveUrl,
       'X-Filename': zipFilename,
+      'X-Filenames': filenamesB64,
     },
   })
 }

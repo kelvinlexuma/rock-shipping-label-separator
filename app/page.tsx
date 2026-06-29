@@ -16,6 +16,7 @@ export default function HomePage() {
   const [state, setState] = useState<AppState>('idle')
   const [toast, setToast] = useState('')
   const [pageCount, setPageCount] = useState(0)
+  const [filenames, setFilenames] = useState<string[]>([])
   const [driveUrl, setDriveUrl] = useState('')
   const [zipBlob, setZipBlob] = useState<{ blob: Blob; filename: string } | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
@@ -81,8 +82,17 @@ export default function HomePage() {
       const disposition = res.headers.get('Content-Disposition') || ''
       const nameMatch = disposition.match(/filename="(.+?)"/)
       const filename = nameMatch?.[1] || 'labels.zip'
+
+      // Decode the output filename list (base64 JSON) for the preview
+      let names: string[] = []
+      try {
+        const b64 = res.headers.get('X-Filenames')
+        if (b64) names = JSON.parse(decodeURIComponent(escape(atob(b64))))
+      } catch { /* preview is best-effort */ }
+
       const blob = await res.blob()
       setPageCount(count)
+      setFilenames(names)
       setDriveUrl(driveLink)
       setZipBlob({ blob, filename })
       setState('success')
@@ -107,6 +117,15 @@ export default function HomePage() {
     setState('idle')
     setZipBlob(null)
     setErrorMsg('')
+    setFilenames([])
+  }
+
+  // Split a filename into its barcode stem and the .pdf extension for styling.
+  // Flags fallback page_N names (where no barcode could be read) so they stand out.
+  function nameParts(name: string) {
+    const stem = name.replace(/\.pdf$/i, '')
+    const isFallback = /^page_\d+$/i.test(stem)
+    return { stem, isFallback }
   }
 
   const isDragging = state === 'dragging'
@@ -563,6 +582,121 @@ export default function HomePage() {
           to   { opacity: 1; transform: translateY(0); }
         }
 
+        /* ── Output files preview ── */
+        .files-panel {
+          background: rgba(12,18,32,0.95);
+          border: 1px solid rgba(100,116,139,0.14);
+          border-top: 2px solid rgba(34,197,94,0.5);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .files-head {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 16px 22px;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .files-head-label {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 13px;
+          letter-spacing: 0.22em;
+          color: #cbd5e1;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+        .files-count {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 12px;
+          font-weight: 700;
+          color: #4ade80;
+          background: rgba(34,197,94,0.12);
+          border: 1px solid rgba(34,197,94,0.3);
+          padding: 2px 9px;
+          line-height: 1.4;
+          white-space: nowrap;
+        }
+        .files-head-rule { flex: 1; height: 1px; background: rgba(100,116,139,0.15); }
+        .files-head-hint {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 11px;
+          letter-spacing: 0.14em;
+          color: #475569;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+
+        .files-list {
+          list-style: none;
+          margin: 0;
+          padding: 8px;
+          max-height: 280px;
+          overflow-y: auto;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 2px;
+        }
+        /* custom scrollbar */
+        .files-list::-webkit-scrollbar { width: 8px; }
+        .files-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        .files-list::-webkit-scrollbar-thumb { background: rgba(100,116,139,0.3); border-radius: 4px; }
+        .files-list::-webkit-scrollbar-thumb:hover { background: rgba(100,116,139,0.5); }
+
+        .file-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 9px 12px;
+          background: rgba(255,255,255,0.012);
+          border-left: 2px solid transparent;
+          transition: background 0.12s, border-color 0.12s;
+          min-width: 0;
+        }
+        .file-row:hover {
+          background: rgba(34,197,94,0.06);
+          border-left-color: rgba(34,197,94,0.6);
+        }
+        .file-row.fallback {
+          border-left-color: rgba(245,158,11,0.5);
+          background: rgba(245,158,11,0.05);
+        }
+
+        .file-idx {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 12px;
+          color: #475569;
+          flex-shrink: 0;
+          width: 22px;
+        }
+        .file-glyph { color: #4ade80; flex-shrink: 0; }
+        .file-row.fallback .file-glyph { color: #fbbf24; }
+
+        .file-name {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 14px;
+          letter-spacing: 0.01em;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          min-width: 0;
+          flex: 1;
+        }
+        .file-stem { color: #e2e8f0; }
+        .file-ext { color: #475569; }
+
+        .file-tag {
+          font-family: 'Share Tech Mono', monospace;
+          font-size: 10px;
+          letter-spacing: 0.08em;
+          color: #fbbf24;
+          background: rgba(245,158,11,0.1);
+          border: 1px solid rgba(245,158,11,0.25);
+          padding: 1px 6px;
+          text-transform: uppercase;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
         /* ── Mobile ── */
         @media (max-width: 640px) {
           .app-header {
@@ -587,6 +721,9 @@ export default function HomePage() {
           .zone-sub-text { font-size: 16px; }
           .convert-btn { font-size: 19px; letter-spacing: 0.28em; }
           .toast { left: 16px; right: 16px; bottom: 16px; max-width: none; }
+          .files-list { grid-template-columns: 1fr; }
+          .files-head { padding: 14px 16px; gap: 10px; }
+          .files-head-hint { display: none; }
         }
       `}</style>
 
@@ -730,6 +867,35 @@ export default function HomePage() {
                     : <div className="drive-note" style={{ color: '#334155' }}>Drive backup unavailable</div>
                   }
                 </div>
+              </div>
+            )}
+
+            {isSuccess && filenames.length > 0 && (
+              <div className="files-panel">
+                <div className="files-head">
+                  <span className="files-head-label">Output Files</span>
+                  <span className="files-count">{filenames.length}</span>
+                  <span className="files-head-rule" />
+                  <span className="files-head-hint">named by barcode</span>
+                </div>
+                <ol className="files-list">
+                  {filenames.map((name, i) => {
+                    const { stem, isFallback } = nameParts(name)
+                    return (
+                      <li key={i} className={`file-row${isFallback ? ' fallback' : ''}`}>
+                        <span className="file-idx">{String(i + 1).padStart(2, '0')}</span>
+                        <svg className="file-glyph" width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                        </svg>
+                        <span className="file-name">
+                          <span className="file-stem">{stem}</span>
+                          <span className="file-ext">.pdf</span>
+                        </span>
+                        {isFallback && <span className="file-tag">no barcode</span>}
+                      </li>
+                    )
+                  })}
+                </ol>
               </div>
             )}
 
