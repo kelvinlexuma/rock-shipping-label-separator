@@ -53,21 +53,31 @@ export async function uploadZipToDrive(zipBuffer: Buffer, filename: string): Pro
 export async function enforceRecordLimit(): Promise<void> {
   const drive = getDriveClient()
 
-  const list = await drive.files.list({
-    q: `'${FOLDER_ID}' in parents and trashed = false`,
-    orderBy: 'createdTime asc',
-    fields: 'files(id, name, createdTime)',
-    supportsAllDrives: true,
-    includeItemsFromAllDrives: true,
-    pageSize: 100,
-  })
+  // Collect all files across pages before deciding what to delete.
+  // pageSize: 1000 (API max) + nextPageToken in fields ensures we never miss files
+  // due to partial first-page responses (which the Drive API explicitly allows).
+  const allFiles: Array<{ id: string }> = []
+  let pageToken: string | undefined
+  do {
+    const res = await drive.files.list({
+      q: `'${FOLDER_ID}' in parents and trashed = false`,
+      orderBy: 'createdTime asc',
+      fields: 'nextPageToken, files(id, createdTime)',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
+      pageSize: 1000,
+      ...(pageToken ? { pageToken } : {}),
+    })
+    for (const f of res.data.files ?? []) {
+      if (f.id) allFiles.push({ id: f.id })
+    }
+    pageToken = res.data.nextPageToken ?? undefined
+  } while (pageToken)
 
-  const files = list.data.files || []
-  const toDelete = files.slice(0, Math.max(0, files.length - MAX_RECORDS))
-
+  const toDelete = allFiles.slice(0, Math.max(0, allFiles.length - MAX_RECORDS))
   await Promise.all(
     toDelete.map(f =>
-      drive.files.delete({ fileId: f.id!, supportsAllDrives: true }).catch(() => {})
+      drive.files.delete({ fileId: f.id, supportsAllDrives: true }).catch(() => {})
     )
   )
 }
