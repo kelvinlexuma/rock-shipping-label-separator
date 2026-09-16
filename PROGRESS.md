@@ -8,6 +8,35 @@ Vercel project: `prj_qXqILGIDRrffBVNh8Uz4XuzPYPkH` (team `team_fW1erGDv9iZsRShcQ
 
 ---
 
+## 2026-09-16 — Continental Converter + tool picker
+
+**Why:** Rock staff converted the ECang "Continental Label" CSV into the Continental
+upload XLSX by hand (sort, merge rows per order, strip remarks, set origin/weight).
+
+**What:**
+- `/` is now a tool picker; the separator moved to `/separator` (API path unchanged).
+- New `/continental` page + `/api/continental` + `lib/continental.ts` (rules in CLAUDE.md).
+- Shared header/styles extracted to `app/components/`.
+- Drive: generic `uploadFileToDrive`, `getOrCreateSubfolder`; `enforceRecordLimit`
+  takes a folder and **ignores subfolders** (otherwise the new `Continental` folder
+  would eventually be counted as the oldest "file" and deleted).
+
+**Rules confirmed with user (pending client double-check):** mixed orders use priority
+Digital Camera > Mobile Telephone > Lens > Camera accessories; lens → "Camera Lens";
+REPAIR-n SKUs replace the product SKUs; quantity always 1.
+
+**Verified:** `scripts/verify-continental.mts` against both real samples — every cell
+matches except the 3 intended diffs (`Digital Camera ` trailing-space typo ×2 in the
+2026-09-11 upload; `lens` → `Camera Lens` in the Step 4 example). Edge cases (REPAIR,
+unknown type, missing USD, shipping-charge-only order, leading-zero zip/reference)
+checked. `lint`, `tsc`, `next build` clean; local production server tested in
+Puppeteer at 1280px and 400px (picker, converter preview, separator), separator API
+still returns 20-page ZIP for `EAE+print_label.pdf`.
+
+**Not yet done:** push/deploy to Vercel, `rock.lexuma.com` domain + DNS.
+
+---
+
 ## 2026-06-29 — Image-based PDFs (barcode from image)
 
 **Symptom:** a new file (`RE1ALL.pdf`) again produced `page_1.pdf`, `page_2.pdf`…

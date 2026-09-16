@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev      # local dev server (http://localhost:3000)
 npm run build    # production build — must pass before deploying
 npm run lint     # ESLint check
+npx tsx scripts/verify-continental.mts   # Continental Converter vs the real sample uploads (expects 3 known diffs)
 ```
 
 npm installs require bypassing the system proxy:
@@ -24,12 +25,25 @@ one-time browser setup needed — see below).
 
 **Next.js 16 App Router** — all routing is file-based under `app/`.
 
+Two tools share one login:
+
+| Route | Page | API |
+|---|---|---|
+| `/` | Tool picker (cards) | — |
+| `/separator` | Shipping Label Separator (PDF → ZIP) | `/api/convert` |
+| `/continental` | Continental Converter (ECang CSV → XLSX) | `/api/continental` |
+
+Shared chrome lives in `app/components/`: `RockHeader.tsx` (logo → `/`, "← Tools", Logout) and
+`rock-styles.ts` (`ROCK_BASE_CSS`: header, drop zone, buttons, status cards, toast, mobile).
+Page-specific CSS stays in each page's own `<style>` block. `/api/convert` kept its path on
+purpose — `vercel.json` and `outputFileTracingIncludes` reference it.
+
 ### Request flow
 
 ```
 Browser → proxy.ts (auth gate) → app/ pages / api routes
                                         ↓
-                              lib/pdf.ts   lib/drive.ts
+                        lib/pdf.ts   lib/continental.ts   lib/drive.ts
 ```
 
 **`proxy.ts`** (Next.js 16 renamed `middleware.ts` → `proxy.ts`) — intercepts every request, verifies the `rock_session` JWT cookie, redirects to `/login` if missing/invalid. Public paths: `/login`, `/api/login`.
@@ -65,9 +79,21 @@ all-image PDF ≈ 20 s). The convert function is bumped to 2048 MB / 300 s for t
 >   fine locally but Vercel's strict npm rejects it with ERESOLVE.
 > - Extract text from the original PDF — pdf-lib's single-page copies lose font data.
 
-**`lib/drive.ts`** — Google Drive via `googleapis`. Authenticates with a **service account using domain-wide delegation** (`google.auth.JWT` with `subject`), impersonating `account@lexuma.com`, who has edit rights on the target folder. The service-account JSON is supplied base64-encoded in `GOOGLE_SERVICE_ACCOUNT_B64`. No browser sign-in or token refresh — works headless and never expires. Enforces a 30-file cap in the target folder by deleting oldest files after each upload.
+**`lib/drive.ts`** — Google Drive via `googleapis`. Authenticates with a **service account using domain-wide delegation** (`google.auth.JWT` with `subject`), impersonating `account@lexuma.com`, who has edit rights on the target folder. The service-account JSON is supplied base64-encoded in `GOOGLE_SERVICE_ACCOUNT_B64`. No browser sign-in or token refresh — works headless and never expires. Enforces a 30-file cap per folder by deleting oldest files after each upload (`enforceRecordLimit(folderId)`); subfolders are excluded from the count and never deleted. `getOrCreateSubfolder('Continental')` holds the converter's backups.
 
 **`app/api/convert/route.ts`** — accepts `multipart/form-data` with field `file` (PDF), calls `splitAndNamePages`, zips with `jszip`, uploads to Drive, returns the ZIP as a direct download response. Vercel function: 60 s timeout, 1 GB memory.
+
+**`lib/continental.ts`** — Continental Converter, pure functions (no I/O):
+`decodeCsv` (UTF-8 BOM, GB18030 fallback) → `parseEcangCsv` → `convertToContinental` → `buildContinentalWorkbook` (exceljs).
+- Header row found by first cell `订单号` (the metadata block above it varies in length); columns matched **by name**; data stops at the first blank row.
+- One row per order number, sorted A→Z. `SHIPPINGCHARGE-n` rows dropped; SKUs joined `A + B + C`; if any `REPAIR-n` SKU exists only those are kept.
+- product_type / hs_code / country_of_origin from the highest-priority item: Digital Camera (JP) > Mobile Telephone (VN) > Lens → "Camera Lens" (JP) > Camera accessories (CN).
+- cost = insured_value = number after `USD` in 客服备注. quantity always 1 (parcel count), weight(g) 100, service_type from 运输方式.
+- zip / phone / hs_code written as **text** (leading zeros); ECang's leading tab is stripped. Pure-digit reference numbers go in as numbers, like the hand-made uploads.
+- Problems (unknown type, no USD, no HS code, rows disagreeing on USD, shipping-charge-only order skipped) are returned as warnings and shown in the preview — never silent.
+- The workbook is built in code (sheets `order` + `HS code`), not from a bundled template file, so there's nothing extra to trace into the Lambda.
+
+**`app/api/continental/route.ts`** — multipart `file` (.csv) → JSON `{ filename, xlsxBase64, orders, warnings, sourceRowCount, driveSaved }`. JSON rather than headers because the preview can exceed header size limits. Backs up the CSV and XLSX to the Drive subfolder `Continental` (own 30-file cap).
 
 ### Key env vars
 
@@ -94,4 +120,4 @@ All UI styling is plain CSS-in-JS (`<style>` tags inside client components). Fon
 - **Logo**: `public/rock-logo.png` (transparent, dark text). Rendered with `filter: invert(1) hue-rotate(180deg)` so it shows white on dark while keeping the red accent. Each page has a CSS/markup fallback (`RE` badge + text) via an `onError` handler.
 - **Favicon**: single `app/favicon.ico` (Rock logo, 32×32 PNG embedded). Do **not** add `app/icon.png` alongside it — Next.js 16 + Turbopack served a stale/404 hashed `/icon.png` link when both existed.
 - **Background**: locked to `#080d18` on `html, body` in `globals.css` with `overflow-x: hidden` — a light-mode `#fff` default previously showed as white gutters on mobile overscroll.
-- **Mobile**: the main header hides the app title under 640px (the "Upload PDF" panel heading covers it) so the logo and Logout button stay on one row.
+- **Mobile**: the header hides the app title under 640px (the panel heading covers it) so logo, "← Tools" and Logout stay on one row. Wide tables (Continental preview) scroll inside their own `overflow-x:auto` box, never the page.

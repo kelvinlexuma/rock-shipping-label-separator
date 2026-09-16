@@ -30,18 +30,26 @@ function getDriveClient() {
 }
 
 export async function uploadZipToDrive(zipBuffer: Buffer, filename: string): Promise<string> {
+  return uploadFileToDrive(zipBuffer, filename, 'application/zip', FOLDER_ID)
+}
+
+export async function uploadFileToDrive(
+  buffer: Buffer,
+  filename: string,
+  mimeType: string,
+  folderId: string,
+): Promise<string> {
   const drive = getDriveClient()
-  const stream = Readable.from(zipBuffer)
 
   const res = await drive.files.create({
     requestBody: {
       name: filename,
-      parents: [FOLDER_ID],
-      mimeType: 'application/zip',
+      parents: [folderId],
+      mimeType,
     },
     media: {
-      mimeType: 'application/zip',
-      body: stream,
+      mimeType,
+      body: Readable.from(buffer),
     },
     fields: 'id,webViewLink',
     supportsAllDrives: true,
@@ -50,7 +58,30 @@ export async function uploadZipToDrive(zipBuffer: Buffer, filename: string): Pro
   return res.data.webViewLink || res.data.id || ''
 }
 
-export async function enforceRecordLimit(): Promise<void> {
+const FOLDER_MIME = 'application/vnd.google-apps.folder'
+
+/** Find (or create) a subfolder of the main folder, e.g. "Continental". */
+export async function getOrCreateSubfolder(name: string): Promise<string> {
+  const drive = getDriveClient()
+  const escaped = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+  const found = await drive.files.list({
+    q: `'${FOLDER_ID}' in parents and name = '${escaped}' and mimeType = '${FOLDER_MIME}' and trashed = false`,
+    fields: 'files(id)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  })
+  const existing = found.data.files?.[0]?.id
+  if (existing) return existing
+
+  const created = await drive.files.create({
+    requestBody: { name, parents: [FOLDER_ID], mimeType: FOLDER_MIME },
+    fields: 'id',
+    supportsAllDrives: true,
+  })
+  return created.data.id!
+}
+
+export async function enforceRecordLimit(folderId: string = FOLDER_ID): Promise<void> {
   const drive = getDriveClient()
 
   // Collect all files across pages before deciding what to delete.
@@ -60,7 +91,8 @@ export async function enforceRecordLimit(): Promise<void> {
   let pageToken: string | undefined
   do {
     const res = await drive.files.list({
-      q: `'${FOLDER_ID}' in parents and trashed = false`,
+      // Subfolders (e.g. Continental) don't count toward the cap and are never deleted.
+      q: `'${folderId}' in parents and trashed = false and mimeType != '${FOLDER_MIME}'`,
       orderBy: 'createdTime asc',
       fields: 'nextPageToken, files(id, createdTime)',
       supportsAllDrives: true,

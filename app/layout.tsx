@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shipping Label Separator — Rock Enterprise",
-  description: "Internal tool for splitting multi-page shipping label PDFs",
+  title: "Rock Operations Tools — Rock Enterprise",
+  description: "Internal shipping tools: label separator and Continental converter",
 };
 
 export const viewport: Viewport = {
