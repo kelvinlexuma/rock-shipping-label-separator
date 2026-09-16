@@ -291,8 +291,8 @@ export default function LoginPage() {
             )}
 
             <div className="app-name-block">
-              <div className="app-name">Shipping Label Separator</div>
-              <div className="app-tag">Internal Operations Tool</div>
+              <div className="app-name">Shipping Operations Hub</div>
+              <div className="app-tag">Label Separator · Continental Converter</div>
             </div>
           </div>
 

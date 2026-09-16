@@ -102,7 +102,7 @@ export default function ToolPickerPage() {
       `}</style>
 
       <div className="app-root">
-        <RockHeader title="Rock Operations Tools" />
+        <RockHeader title="Shipping Operations Hub" />
 
         <main className="app-main">
           <div className="content-panel">

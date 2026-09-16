@@ -29,7 +29,7 @@ Two tools share one login:
 
 | Route | Page | API |
 |---|---|---|
-| `/` | Tool picker (cards) | — |
+| `/` | Tool picker — "Shipping Operations Hub" (same name on login page + tab title) | — |
 | `/separator` | Shipping Label Separator (PDF → ZIP) | `/api/convert` |
 | `/continental` | Continental Converter (ECang CSV → XLSX) | `/api/continental` |
 

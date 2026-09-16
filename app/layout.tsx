@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rock Operations Tools — Rock Enterprise",
+  title: "Shipping Operations Hub — Rock Enterprise",
   description: "Internal shipping tools: label separator and Continental converter",
 };
 
