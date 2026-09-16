@@ -2,7 +2,7 @@
 
 Rock Enterprise — Shipping Label Separator. Status log of notable work.
 
-Production: https://rock-label-separator.vercel.app
+Production: https://rock.lexuma.com (also https://rock-label-separator.vercel.app)
 Repo: kelvinlexuma/rock-shipping-label-separator
 Vercel project: `prj_qXqILGIDRrffBVNh8Uz4XuzPYPkH` (team `team_fW1erGDv9iZsRShcQkwjt068`)
 
@@ -33,7 +33,20 @@ checked. `lint`, `tsc`, `next build` clean; local production server tested in
 Puppeteer at 1280px and 400px (picker, converter preview, separator), separator API
 still returns 20-page ZIP for `EAE+print_label.pdf`.
 
-**Not yet done:** push/deploy to Vercel, `rock.lexuma.com` domain + DNS.
+**Deployed:** commit `58dd04f`, Vercel production READY. Verified live with the real
+login: picker/separator/continental pages load, logged-out → `/login`; 2026-09-11 CSV →
+5 orders, no warnings, Drive backup OK; `RE1ALL.pdf` → 20/20 BB barcodes, 0 `page_N` (~20 s).
+
+**Custom domain `rock.lexuma.com`:** added to the Vercel project via API
+(`POST /v10/projects/{id}/domains`, verified). DNS is on Cloudflare (lexuma.com
+nameservers) — user added CNAME `rock → cname.vercel-dns.com` (DNS-only). Vercel
+config reports not misconfigured; Let's Encrypt cert issued. Login + all three pages
+verified on the new host. Session cookies are per host, so switching from the
+vercel.app URL needs a fresh login.
+
+**Test leftovers:** 3 CSV+XLSX test pairs in the Drive `Continental` subfolder (safe to delete).
+
+**Open:** client still to confirm the 4 rules above.
 
 ---
 
