@@ -21,6 +21,15 @@ from the original SKU; quantity 1) — code already matched. Two new rules added
 Verified: sample diff unchanged (3 known cells, 0 warnings on real samples); synthetic
 cases for camcorder, GoPro, Insta360, fallback keywords, unknown type, long addresses.
 
+**Follow-up confirmed by client (same day) — no code change needed**, all as implemented:
+1. Insta360 / GoPro → CN applies to every camera type, including "Digital Camera".
+2. Only Insta360 and GoPro are CN brands; other brands' cameras (e.g. DJI) → JP.
+3. Address line 1 over 40 chars auto-moves overflow to line 2 when it fits (flagged);
+   otherwise left for staff to shorten.
+4. Camcorder has the same priority as Digital Camera.
+
+All Continental Converter rules are now client-confirmed. Deployed commit `48dffc0`.
+
 ---
 
 ## 2026-09-16 — Continental Converter + tool picker

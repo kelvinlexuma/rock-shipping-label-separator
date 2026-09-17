@@ -90,7 +90,7 @@ all-image PDF ≈ 20 s). The convert function is bumped to 2048 MB / 300 s for t
 - product_type / hs_code / country_of_origin from the highest-priority item: Digital Camera / Camcorder (JP) > Mobile Telephone (VN) > Lens → "Camera Lens" (JP) > Camera accessories (CN).
 - Non-standard declared types (`FALLBACKS`) keep ECang's wording and get origin by keyword group: accessories-like → CN, phone → VN, lens → JP, camera/video → JP — flagged in the preview. Camera-rank items whose SKU or 产品英文名称 matches Insta360/GoPro (`CN_CAMERA_BRANDS`) → CN. No keyword match → warning, origin blank.
 - Continental field limits (`LIMITS`, from template row 2: name 100, addr1/addr2 40, city 60, state 50, zip 30, phone 50, sales record 50, product_type 100, sku 50, hs_code 6–14) are checked → warnings. Address line 1 over 40 spills into the front of line 2 at a word boundary if the result fits 40 (flagged); otherwise left as-is with a warning.
-- Rules 1–6 confirmed by the Rock client on 2026-09-17.
+- All rules above (incl. Insta360/GoPro → CN for any camera type, DJI etc. → JP, address spill, Camcorder = Digital Camera priority) confirmed by the Rock client on 2026-09-17.
 - cost = insured_value = number after `USD` in 客服备注. quantity always 1 (parcel count), weight(g) 100, service_type from 运输方式.
 - zip / phone / hs_code written as **text** (leading zeros); ECang's leading tab is stripped. Pure-digit reference numbers go in as numbers, like the hand-made uploads.
 - Problems (unknown type, no USD, no HS code, rows disagreeing on USD, shipping-charge-only order skipped) are returned as warnings and shown in the preview — never silent.
