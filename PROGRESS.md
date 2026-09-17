@@ -8,6 +8,21 @@ Vercel project: `prj_qXqILGIDRrffBVNh8Uz4XuzPYPkH` (team `team_fW1erGDv9iZsRShcQ
 
 ---
 
+## 2026-09-17 — Continental Converter: client answers applied
+
+Client confirmed the 4 rules (priority order; Lens = Camera Lens; REPAIR SKU only, details
+from the original SKU; quantity 1) — code already matched. Two new rules added:
+- **Country of origin for non-standard types:** Camcorder → JP (same rank as Digital
+  Camera); Insta360 / GoPro cameras → CN (brand from SKU or 产品英文名称); other types by
+  keyword group — camera/lens JP, phone VN, accessories CN (flagged for review).
+- **Field limits** from the Continental template row 2 are checked. Address line 1 > 40
+  chars spills into line 2 at a word boundary when it fits; otherwise a warning.
+
+Verified: sample diff unchanged (3 known cells, 0 warnings on real samples); synthetic
+cases for camcorder, GoPro, Insta360, fallback keywords, unknown type, long addresses.
+
+---
+
 ## 2026-09-16 — Continental Converter + tool picker
 
 **Why:** Rock staff converted the ECang "Continental Label" CSV into the Continental
@@ -46,7 +61,7 @@ vercel.app URL needs a fresh login.
 
 **Test leftovers:** 3 CSV+XLSX test pairs in the Drive `Continental` subfolder (safe to delete).
 
-**Open:** client still to confirm the 4 rules above.
+**Open:** ~~client to confirm the 4 rules~~ — confirmed 2026-09-17.
 
 ---
 
