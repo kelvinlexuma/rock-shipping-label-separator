@@ -29,6 +29,11 @@ function getDriveClient() {
   return google.drive({ version: 'v3', auth: getDriveAuth() })
 }
 
+// The Sheets API accepts the drive scope, so no extra domain-wide-delegation scope is needed.
+function getSheetsClient() {
+  return google.sheets({ version: 'v4', auth: getDriveAuth() })
+}
+
 export async function uploadZipToDrive(zipBuffer: Buffer, filename: string): Promise<string> {
   return uploadFileToDrive(zipBuffer, filename, 'application/zip', FOLDER_ID)
 }
@@ -59,6 +64,7 @@ export async function uploadFileToDrive(
 }
 
 const FOLDER_MIME = 'application/vnd.google-apps.folder'
+const SHEET_MIME = 'application/vnd.google-apps.spreadsheet'
 
 /** Find (or create) a subfolder of the main folder, e.g. "Continental". */
 export async function getOrCreateSubfolder(name: string): Promise<string> {
@@ -91,8 +97,9 @@ export async function enforceRecordLimit(folderId: string = FOLDER_ID): Promise<
   let pageToken: string | undefined
   do {
     const res = await drive.files.list({
-      // Subfolders (e.g. Continental) don't count toward the cap and are never deleted.
-      q: `'${folderId}' in parents and trashed = false and mimeType != '${FOLDER_MIME}'`,
+      // Subfolders (e.g. Continental) and the conversion log sheet don't count toward
+      // the cap and are never deleted.
+      q: `'${folderId}' in parents and trashed = false and mimeType != '${FOLDER_MIME}' and mimeType != '${SHEET_MIME}'`,
       orderBy: 'createdTime asc',
       fields: 'nextPageToken, files(id, createdTime)',
       supportsAllDrives: true,
@@ -112,4 +119,82 @@ export async function enforceRecordLimit(folderId: string = FOLDER_ID): Promise<
       drive.files.delete({ fileId: f.id, supportsAllDrives: true }).catch(() => {})
     )
   )
+}
+
+// ── Conversion log ──────────────────────────────────────────────────────────
+// One row per conversion (both tools) in a "Conversion log" Google Sheet in the main
+// folder, so "did staff use it / did the backup work?" can be answered later —
+// Vercel only keeps ~1 day of request logs.
+
+const LOG_SHEET_NAME = 'Conversion log'
+const LOG_HEADERS = ['Time (HKT)', 'Tool', 'Uploaded file', 'Output file', 'Count', 'Warnings', 'Drive backup', 'Error']
+
+export interface ConversionLogEntry {
+  tool: 'Continental Converter' | 'Label Separator'
+  uploadedFile: string
+  outputFile?: string
+  /** Orders (Continental) or labels (Separator). */
+  count?: number
+  warnings?: number
+  driveBackup: 'Saved' | 'FAILED' | '—'
+  error?: string
+}
+
+let logSheetId: string | null = null
+
+async function getLogSheetId(): Promise<string> {
+  if (logSheetId) return logSheetId
+  const drive = getDriveClient()
+  const found = await drive.files.list({
+    q: `'${FOLDER_ID}' in parents and name = '${LOG_SHEET_NAME}' and mimeType = '${SHEET_MIME}' and trashed = false`,
+    fields: 'files(id)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  })
+  let id = found.data.files?.[0]?.id
+  if (!id) {
+    const created = await drive.files.create({
+      requestBody: { name: LOG_SHEET_NAME, parents: [FOLDER_ID], mimeType: SHEET_MIME },
+      fields: 'id',
+      supportsAllDrives: true,
+    })
+    id = created.data.id!
+    await getSheetsClient().spreadsheets.values.update({
+      spreadsheetId: id,
+      range: 'A1',
+      valueInputOption: 'RAW',
+      requestBody: { values: [LOG_HEADERS] },
+    })
+  }
+  logSheetId = id
+  return id
+}
+
+export function hktTimestamp(): string {
+  return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ')
+}
+
+/** Append a row to the conversion log. Never throws — logging must not break a conversion. */
+export async function logConversion(entry: ConversionLogEntry): Promise<void> {
+  try {
+    const spreadsheetId = await getLogSheetId()
+    await getSheetsClient().spreadsheets.values.append({
+      spreadsheetId,
+      range: 'A:H',
+      valueInputOption: 'RAW',
+      insertDataOption: 'INSERT_ROWS',
+      requestBody: {
+        values: [[
+          hktTimestamp(), entry.tool, entry.uploadedFile, entry.outputFile ?? '',
+          entry.count ?? '', entry.warnings ?? '', entry.driveBackup, entry.error ?? '',
+        ]],
+      },
+    })
+  } catch (err) {
+    console.error('Conversion log write failed:', err)
+  }
+}
+
+export function errorMessage(err: unknown): string {
+  return (err instanceof Error ? err.message : String(err)).slice(0, 300)
 }

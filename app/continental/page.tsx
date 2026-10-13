@@ -329,7 +329,7 @@ export default function ContinentalPage() {
                   </div>
                   {result.driveSaved
                     ? <div className="drive-note">Also saved to Google Drive (Continental folder)</div>
-                    : <div className="drive-note" style={{ color: '#334155' }}>Drive backup unavailable</div>
+                    : <div className="drive-note failed">Not saved to Google Drive — please keep your downloaded file and tell Lexuma</div>
                   }
                 </div>
               </div>

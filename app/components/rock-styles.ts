@@ -405,6 +405,17 @@ export const ROCK_BASE_CSS = `
           margin-top: 8px;
         }
         .drive-note::before { content: '▸'; color: #22c55e; font-size: 10px; }
+        /* Backup failed — must be noticed, the file is NOT in Drive */
+        .drive-note.failed {
+          color: #fca5a5;
+          background: rgba(220,38,38,0.1);
+          border: 1px solid rgba(220,38,38,0.45);
+          padding: 10px 14px;
+          letter-spacing: 0.04em;
+          line-height: 1.5;
+          align-items: flex-start;
+        }
+        .drive-note.failed::before { content: '⚠'; color: #f87171; font-size: 14px; }
 
         /* ── Spinner ── */
         .spin-ring {

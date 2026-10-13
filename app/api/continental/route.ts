@@ -5,7 +5,13 @@ import {
   convertToContinental,
   buildContinentalWorkbook,
 } from '@/lib/continental'
-import { uploadFileToDrive, getOrCreateSubfolder, enforceRecordLimit } from '@/lib/drive'
+import {
+  uploadFileToDrive,
+  getOrCreateSubfolder,
+  enforceRecordLimit,
+  logConversion,
+  errorMessage,
+} from '@/lib/drive'
 
 const XLSX_MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
@@ -37,13 +43,14 @@ export async function POST(req: NextRequest) {
   try {
     result = convertToContinental(parseEcangCsv(decodeCsv(csvBytes)))
   } catch (err) {
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Could not read the CSV' },
-      { status: 400 },
-    )
+    const error = err instanceof Error ? err.message : 'Could not read the CSV'
+    await logConversion({ tool: 'Continental Converter', uploadedFile: file.name, driveBackup: '—', error })
+    return NextResponse.json({ error }, { status: 400 })
   }
   if (result.orders.length === 0) {
-    return NextResponse.json({ error: 'No orders found in the CSV' }, { status: 400 })
+    const error = 'No orders found in the CSV'
+    await logConversion({ tool: 'Continental Converter', uploadedFile: file.name, driveBackup: '—', error })
+    return NextResponse.json({ error }, { status: 400 })
   }
 
   const xlsx = await buildContinentalWorkbook(result.orders)
@@ -52,6 +59,7 @@ export async function POST(req: NextRequest) {
 
   // Back up the source CSV and the output to Drive/Continental (own 30-file cap).
   let driveSaved = false
+  let driveError = ''
   try {
     const folderId = await getOrCreateSubfolder('Continental')
     await uploadFileToDrive(xlsx, `${date}_${time} ${filename}`, XLSX_MIME, folderId)
@@ -60,8 +68,19 @@ export async function POST(req: NextRequest) {
     driveSaved = true
   } catch (err) {
     console.error('Drive upload error:', err)
+    driveError = errorMessage(err)
     // Continue — the user still gets the file.
   }
+
+  await logConversion({
+    tool: 'Continental Converter',
+    uploadedFile: file.name,
+    outputFile: filename,
+    count: result.orders.length,
+    warnings: result.orders.filter(o => o.warnings.length).length + result.warnings.length,
+    driveBackup: driveSaved ? 'Saved' : 'FAILED',
+    error: driveError ? `Drive: ${driveError}` : undefined,
+  })
 
   return NextResponse.json({
     filename,

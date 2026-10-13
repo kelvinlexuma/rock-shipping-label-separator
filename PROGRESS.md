@@ -8,6 +8,29 @@ Vercel project: `prj_qXqILGIDRrffBVNh8Uz4XuzPYPkH` (team `team_fW1erGDv9iZsRShcQ
 
 ---
 
+## 2026-10-13 — Missing Continental backups after 30 Sep → conversion log
+
+**Report:** no CSV/XLSX in Drive `Continental` folder after 2026-09-30.
+
+**Investigation:** last staff backup 2026-09-30 10:35 HKT. No code deploys since
+2026-09-17, no env var changes since June, Drive quota ~5% used. A live conversion
+today saved both files and the 30-file cap correctly deleted the oldest pair. Before
+that the folder still held the 2026-09-16 test files, so nothing staff uploaded after
+30 Sep had been deleted by the cap: either the tool wasn't used, or uploads failed
+(UI would have shown the faint grey "Drive backup unavailable"). **Couldn't be settled:
+Vercel request logs only go back ~1 day** (older windows → `ExceedsBillingLimitError`, and a
+window spanning past retention silently returns 0 rows, which looks like "no traffic").
+
+**Change:**
+- Google Sheet **"Conversion log"** in the main Drive folder; one row per conversion
+  attempt for both tools (incl. bad-CSV / PDF errors and Drive backup failures with the
+  error text). `logConversion()` in `lib/drive.ts`, never throws.
+- Sheets excluded from the 30-file cap (otherwise the log would be deleted as the oldest file).
+- Failed backup now a red warning ("Not saved to Google Drive — keep your downloaded
+  file and tell Lexuma") instead of a grey note, on both tools.
+
+---
+
 ## 2026-09-17 — Continental Converter: client answers applied
 
 Client confirmed the 4 rules (priority order; Lens = Camera Lens; REPAIR SKU only, details

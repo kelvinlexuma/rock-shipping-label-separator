@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import JSZip from 'jszip'
 import { splitAndNamePages } from '@/lib/pdf'
-import { uploadZipToDrive, enforceRecordLimit } from '@/lib/drive'
+import { uploadZipToDrive, enforceRecordLimit, logConversion, errorMessage } from '@/lib/drive'
 
 function getTimestampFilename(): string {
   const now = new Date()
@@ -35,6 +35,10 @@ export async function POST(req: NextRequest) {
     pages = await splitAndNamePages(pdfBytes)
   } catch (err) {
     console.error('PDF processing error:', err)
+    await logConversion({
+      tool: 'Label Separator', uploadedFile: file.name, driveBackup: '—',
+      error: `PDF processing: ${errorMessage(err)}`,
+    })
     return NextResponse.json({ error: 'Failed to process PDF' }, { status: 500 })
   }
 
@@ -61,13 +65,26 @@ export async function POST(req: NextRequest) {
 
   // Upload to Google Drive and enforce 30-record limit
   let driveUrl = ''
+  let driveError = ''
   try {
     driveUrl = await uploadZipToDrive(zipBuffer, zipFilename)
     await enforceRecordLimit()
   } catch (err) {
     console.error('Drive upload error:', err)
+    driveError = errorMessage(err)
     // Continue — still return ZIP to user even if Drive fails
   }
+
+  await logConversion({
+    tool: 'Label Separator',
+    uploadedFile: file.name,
+    outputFile: zipFilename,
+    count: pages.length,
+    // Pages where no barcode could be read (named page_N.pdf)
+    warnings: finalNames.filter(n => /^page_\d+(_\d+)?\.pdf$/i.test(n)).length,
+    driveBackup: driveUrl ? 'Saved' : 'FAILED',
+    error: driveError ? `Drive: ${driveError}` : undefined,
+  })
 
   // Base64-encode the filename list so it survives as a header value regardless
   // of count/characters. Frontend decodes it to render the output preview.
